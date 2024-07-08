@@ -27,27 +27,14 @@ public class StationAcceptanceTest {
     @Test
     void createStation() {
         // when
-        Map<String, String> params = new HashMap<>();
-        params.put("name", "강남역");
-
-        ExtractableResponse<Response> response =
-                RestAssured.given().log().all()
-                        .body(params)
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .when().post("/stations")
-                        .then().log().all()
-                        .extract();
+        createStation("강남역");
 
         // then
-        assertThat(response.statusCode()).isEqualTo(HttpStatus.CREATED.value());
+        List<String> stationNames = getStationNames();
 
         // then
-        List<String> stationNames =
-                RestAssured.given().log().all()
-                        .when().get("/stations")
-                        .then().log().all()
-                        .extract().jsonPath().getList("name", String.class);
-        assertThat(stationNames).containsAnyOf("강남역");
+        assertThat(stationNames).containsExactlyInAnyOrder("강남역");
+
     }
 
     /**
@@ -55,13 +42,70 @@ public class StationAcceptanceTest {
      * When 지하철역 목록을 조회하면
      * Then 2개의 지하철역을 응답 받는다
      */
-    // TODO: 지하철역 목록 조회 인수 테스트 메서드 생성
+
+    @DisplayName("지하철역을 생성하고 목록을 조회하면 응답받는다.")
+    @Test
+    void getStations() {
+        // given
+        createStation("강남역");
+        createStation("역삼역");
+
+        // when
+        List<String> stationNames = getStationNames();
+
+        // then
+        assertThat(stationNames).containsExactlyInAnyOrder("강남역", "역삼역");
+    }
 
     /**
      * Given 지하철역을 생성하고
      * When 그 지하철역을 삭제하면
      * Then 그 지하철역 목록 조회 시 생성한 역을 찾을 수 없다
      */
-    // TODO: 지하철역 제거 인수 테스트 메서드 생성
+    @DisplayName("지하철역을 생성하고 그 역을 삭제하면 목록 조회시 찾을 수 없다.")
+    @Test
+    void deleteStation() {
+        // given
+        long stationId = createStation("강남역");
+
+        // when
+        deleteStation(stationId);
+
+        // then
+        List<String> stationNames = getStationNames();
+        assertThat(stationNames).doesNotContain("강남역");
+
+    }
+
+
+    private long createStation(String stationName) {
+        Map<String, String> params = new HashMap<>();
+        params.put("name", stationName);
+
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .body(params)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .when().post("/stations")
+                .then().statusCode(HttpStatus.CREATED.value())
+                .log().all()
+                .extract();
+
+        return response.jsonPath().getLong("id");
+    }
+
+    private List<String> getStationNames() {
+        return RestAssured.given().log().all()
+                .when().get("/stations")
+                .then().log().all()
+                .extract().jsonPath().getList("name", String.class);
+    }
+
+    private static void deleteStation(long stationId) {
+        RestAssured.given().log().all()
+                .when().delete("/stations/" + stationId)
+                .then().log().all()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+    }
+
 
 }
