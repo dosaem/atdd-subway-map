@@ -49,5 +49,5 @@ public class Line {
         this.name = name;
         this.color = color;
     }
-    
+
 }

@@ -10,7 +10,6 @@ public class LineResponse {
     private String color;
     private List<StationResponse> stations;
 
-
     public LineResponse() {
     }
 
@@ -41,4 +40,5 @@ public class LineResponse {
     public List<StationResponse> getStations() {
         return stations;
     }
+    
 }

@@ -3,7 +3,6 @@ package subway;
 import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
-import io.restassured.response.ResponseBodyExtractionOptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -126,6 +125,39 @@ public class LineAcceptanceTest {
         assertThat(updateLine.getName()).isEqualTo("22호선");
         assertThat(updateLine.getColor()).isEqualTo("bg-green-400");
 
+    }
+
+    /**
+     * Given: 특정 지하철 노선이 등록되어 있고,
+     * When: 관리자가 해당 노선을 삭제하면,
+     * Then: 해당 노선이 삭제되고 노선 목록에서 제외된다.
+     */
+
+    @DisplayName("노선 삭제")
+    @Test
+    void deleteLine() {
+        // given
+
+        long gangnamStationId = createStation("강남역");
+        long yeoksamStationId = createStation("역삼역");
+        LineRequest lineNumberTwo = new LineRequest("2호선", "bg-green-600", gangnamStationId, yeoksamStationId, 10);
+
+        ExtractableResponse<Response> line = createLine(lineNumberTwo);
+        LineResponse lineResponse = getLine(line.as(LineResponse.class).getId());
+
+        // when
+        deleteLine(lineResponse.getId());
+
+        // then
+        List<String> lineNames = getLineNames();
+        assertThat(lineNames).doesNotContain("2호선");
+    }
+
+    private void deleteLine(Long lineId) {
+        RestAssured.given().log().all()
+                .when().delete("/line/" + lineId)
+                .then().log().all()
+                .statusCode(HttpStatus.NO_CONTENT.value());
     }
 
 
