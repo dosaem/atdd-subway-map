@@ -57,4 +57,10 @@ public class LineService {
                 .orElseThrow(IllegalArgumentException::new);
     }
 
+    @Transactional
+    public LineResponse updateLine(Long lineId, LineUpdateRequest lineUpdateRequest) {
+        Line line = lineRepository.findById(lineId).orElseThrow(IllegalArgumentException::new);
+        line.update(lineUpdateRequest.getName(), lineUpdateRequest.getColor());
+        return createLineResponse(line);
+    }
 }

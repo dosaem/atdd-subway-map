@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import subway.line.LineRequest;
 import subway.line.LineResponse;
+import subway.line.LineUpdateRequest;
 
 import java.util.List;
 
@@ -74,9 +75,9 @@ public class LineAcceptanceTest {
     }
 
     /**
-     * Given: 여러 개의 지하철 노선이 등록되어 있고,
-     * When: 관리자가 지하철 노선 목록을 조회하면,
-     * Then: 모든 지하철 노선 목록이 반환된다.
+     * Given: 특정 지하철 노선이 등록되어 있고,
+     * When: 관리자가 해당 노선을 조회하면,
+     * Then: 해당 노선의 정보가 반환된다.
      */
 
     @DisplayName("노선 조회")
@@ -99,13 +100,51 @@ public class LineAcceptanceTest {
 
     }
 
+    /**
+     * Given: 특정 지하철 노선이 등록되어 있고,
+     * When: 관리자가 해당 노선을 수정하면,
+     * Then: 해당 노선의 정보가 수정된다.
+     */
+
+    @DisplayName("노선 수정")
+    @Test
+    void updateLine() {
+        // given
+
+        long gangnamStationId = createStation("강남역");
+        long yeoksamStationId = createStation("역삼역");
+        LineRequest lineNumberTwo = new LineRequest("2호선", "bg-green-600", gangnamStationId, yeoksamStationId, 10);
+
+        ExtractableResponse<Response> line = createLine(lineNumberTwo);
+        LineResponse lineResponse = getLine(line.as(LineResponse.class).getId());
+
+        // when
+        LineUpdateRequest lineUpdateRequest = new LineUpdateRequest("22호선", "bg-green-400");
+        LineResponse updateLine = updateLine(lineResponse.getId(), lineUpdateRequest);
+
+        // then
+        assertThat(updateLine.getName()).isEqualTo("22호선");
+        assertThat(updateLine.getColor()).isEqualTo("bg-green-400");
+
+    }
+
+
+    private LineResponse updateLine(Long lineId, LineUpdateRequest lineUpdateRequest) {
+        return RestAssured.given().log().all()
+                .body(lineUpdateRequest)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .when().put("/line/" + lineId)
+                .then().log().all()
+                .extract().as(LineResponse.class);
+    }
+
     private LineResponse getLine(Long lineId) {
         return RestAssured.given().log().all()
                 .when().get("/line/" + lineId)
                 .then().log().all()
                 .extract().as(LineResponse.class);
     }
-    
+
     private List<String> getLineNames() {
         return RestAssured.given().log().all()
                 .when().get("/lines")
