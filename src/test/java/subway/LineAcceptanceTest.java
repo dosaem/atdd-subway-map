@@ -3,6 +3,7 @@ package subway;
 import io.restassured.RestAssured;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import subway.line.LineRequest;
+import subway.line.LineResponse;
 
 import java.util.List;
 
@@ -71,7 +73,39 @@ public class LineAcceptanceTest {
 
     }
 
+    /**
+     * Given: 여러 개의 지하철 노선이 등록되어 있고,
+     * When: 관리자가 지하철 노선 목록을 조회하면,
+     * Then: 모든 지하철 노선 목록이 반환된다.
+     */
 
+    @DisplayName("노선 조회")
+    @Test
+    void getLine() {
+        // given
+
+        long gangnamStationId = createStation("강남역");
+        long yeoksamStationId = createStation("역삼역");
+        LineRequest lineNumberTwo = new LineRequest("2호선", "bg-green-600", gangnamStationId, yeoksamStationId, 10);
+
+        ExtractableResponse<Response> line = createLine(lineNumberTwo);
+
+        // when
+        LineResponse lineResponse = getLine(line.as(LineResponse.class).getId());
+
+        // then
+        assertThat(lineResponse.getName()).isEqualTo("2호선");
+        assertThat(lineResponse.getColor()).isEqualTo("bg-green-600");
+
+    }
+
+    private LineResponse getLine(Long lineId) {
+        return RestAssured.given().log().all()
+                .when().get("/line/" + lineId)
+                .then().log().all()
+                .extract().as(LineResponse.class);
+    }
+    
     private List<String> getLineNames() {
         return RestAssured.given().log().all()
                 .when().get("/lines")
