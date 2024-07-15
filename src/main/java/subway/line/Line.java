@@ -5,6 +5,8 @@ import subway.station.Station;
 import javax.persistence.*;
 import java.util.List;
 
+import static javax.persistence.FetchType.LAZY;
+
 @Entity
 public class Line {
     @Id
@@ -13,7 +15,7 @@ public class Line {
     private String name;
     private String color;
 
-    @OneToMany
+    @OneToMany(mappedBy = "line", fetch = LAZY)
     private List<Station> stations;
     private Integer distance;
 
